@@ -586,7 +586,7 @@ void FixpositionDriverNode::ProcessTfData(const TfData& tf_data) {
     }
     // FP_ECEF -> FP_ENU0
     else if ((tf.child_frame_id == "FP_ENU0") && (tf.header.frame_id == "FP_ECEF")) {
-        if (IsNewStaticTransform(tf.header.frame_id, tf.child_frame_id)) {
+        if (IsNewStaticTransform(tf)) {
             static_br_->sendTransform(tf);
         }
         ecef_enu0_tf_ = std::make_unique<TfData>(tf_data);
@@ -598,7 +598,7 @@ void FixpositionDriverNode::ProcessTfData(const TfData& tf_data) {
     }
     // Something else
     else {
-        if (IsNewStaticTransform(tf.header.frame_id, tf.child_frame_id)) {
+        if (IsNewStaticTransform(tf)) {
             static_br_->sendTransform(tf);
         }
     }
@@ -680,7 +680,7 @@ void FixpositionDriverNode::PublishNav2Tf() {
     static_transform.transform.rotation.x = 0.0;
     static_transform.transform.rotation.y = 0.0;
     static_transform.transform.rotation.z = 0.0;
-    if (IsNewStaticTransform(static_transform.header.frame_id, static_transform.child_frame_id)) {
+    if (IsNewStaticTransform(static_transform)) {
         static_br_->sendTransform(static_transform);
     }
 
@@ -735,12 +735,33 @@ void FixpositionDriverNode::PublishNav2Tf() {
     PublishDatum(trans_ecef_enu0, tfs_.enu0_poi_->header.stamp, datum_pub_);
 }
 
-bool FixpositionDriverNode::IsNewStaticTransform(const std::string& parent, const std::string& child) {
+bool FixpositionDriverNode::IsNewStaticTransform(const geometry_msgs::msg::TransformStamped& tf) {
     std::lock_guard<std::mutex> lock(static_tf_mutex_);
-    auto key = std::make_pair(parent, child);
-    if (static_tfs_.find(key) == static_tfs_.end()) {
-        static_tfs_.insert(key);
+    auto key = std::make_pair(tf.header.frame_id, tf.child_frame_id);
+
+    auto it = static_tfs_.find(key);
+    if (it == static_tfs_.end()) {
+        // New static transform
+        static_tfs_[key] = tf;
         return true;
+    }
+    // Compare position and orientation with existing tf
+    const auto& existing_tf = it->second.transform;
+
+    const auto& t = tf.transform.translation;
+    const auto& r = tf.transform.rotation;
+    const auto& t2 = existing_tf.translation;
+    const auto& r2 = existing_tf.rotation;
+
+    constexpr double eps = 1e-6;
+    bool changed =
+        std::abs(t.x - t2.x) > eps || std::abs(t.y - t2.y) > eps || std::abs(t.z - t2.z) > eps ||
+        std::abs(r.x - r2.x) > eps || std::abs(r.y - r2.y) > eps ||
+        std::abs(r.z - r2.z) > eps || std::abs(r.w - r2.w) > eps;
+
+    if (changed) {
+      static_tfs_[key] = tf;
+      return true;
     }
     return false;
 }
