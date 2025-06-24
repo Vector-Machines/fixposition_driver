@@ -540,6 +540,7 @@ void FixpositionDriverNode::StopNode() {
     // TF
     tf_br_.reset();
     static_br_.reset();
+    static_tfs_.clear();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -585,7 +586,9 @@ void FixpositionDriverNode::ProcessTfData(const TfData& tf_data) {
     }
     // FP_ECEF -> FP_ENU0
     else if ((tf.child_frame_id == "FP_ENU0") && (tf.header.frame_id == "FP_ECEF")) {
-        static_br_->sendTransform(tf);
+        if (IsNewStaticTransform(tf.header.frame_id, tf.child_frame_id)) {
+            static_br_->sendTransform(tf);
+        }
         ecef_enu0_tf_ = std::make_unique<TfData>(tf_data);
         // Store TF if Nav2 mode is enabled
         if (params_.nav2_mode_) {
@@ -595,7 +598,9 @@ void FixpositionDriverNode::ProcessTfData(const TfData& tf_data) {
     }
     // Something else
     else {
-        static_br_->sendTransform(tf);
+        if (IsNewStaticTransform(tf.header.frame_id, tf.child_frame_id)) {
+            static_br_->sendTransform(tf);
+        }
     }
 }
 
@@ -675,7 +680,9 @@ void FixpositionDriverNode::PublishNav2Tf() {
     static_transform.transform.rotation.x = 0.0;
     static_transform.transform.rotation.y = 0.0;
     static_transform.transform.rotation.z = 0.0;
-    static_br_->sendTransform(static_transform);
+    if (IsNewStaticTransform(static_transform.header.frame_id, static_transform.child_frame_id)) {
+        static_br_->sendTransform(static_transform);
+    }
 
     // Compute FP_ENU0 -> FP_POISH
     // Extract translation and rotation from ECEFENU0
@@ -726,6 +733,16 @@ void FixpositionDriverNode::PublishNav2Tf() {
 
     // Publish WGS84 datum
     PublishDatum(trans_ecef_enu0, tfs_.enu0_poi_->header.stamp, datum_pub_);
+}
+
+bool FixpositionDriverNode::IsNewStaticTransform(const std::string& parent, const std::string& child) {
+    std::lock_guard<std::mutex> lock(static_tf_mutex_);
+    auto key = std::make_pair(parent, child);
+    if (static_tfs_.find(key) == static_tfs_.end()) {
+        static_tfs_.insert(key);
+        return true;
+    }
+    return false;
 }
 
 /* ****************************************************************************************************************** */
