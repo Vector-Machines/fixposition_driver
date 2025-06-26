@@ -467,13 +467,15 @@ bool FixpositionDriverNode::StartNode() {
         }
     }
 
-    // Publish a static identity transform from FP_ENU0 to map
-    geometry_msgs::msg::TransformStamped static_transform;
-    static_transform.header.stamp = tfs_.ecef_enu0_->header.stamp;
-    static_transform.header.frame_id = "FP_ENU0";
-    static_transform.child_frame_id = "map";
-    static_transform.transform.rotation.w = 1.0;
-    static_br_->sendTransform(static_transform);
+    if (params_.nav2_mode_) {
+        // Publish a static identity transform from FP_ENU0 to map
+        geometry_msgs::msg::TransformStamped static_transform;
+        static_transform.header.stamp = tfs_.ecef_enu0_->header.stamp;
+        static_transform.header.frame_id = "FP_ENU0";
+        static_transform.child_frame_id = "map";
+        static_transform.transform.rotation.w = 1.0;
+        static_br_->sendTransform(static_transform);
+    }
 
     return driver_.StartDriver();
 }
