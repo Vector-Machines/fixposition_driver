@@ -200,6 +200,9 @@ void PublishFpaOdometryDataNavSatFix(const fpa::FpaOdometryPayload& payload, boo
             }
         }
 
+        if (payload.gnss1_fix != fpa::FpaGnssFix::RTK_FIXED || payload.gnss2_fix != fpa::FpaGnssFix::RTK_FIXED) {
+            return;
+        }
         // Publish message
         pub->publish(msg);
     }

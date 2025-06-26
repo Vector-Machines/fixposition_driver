@@ -467,6 +467,14 @@ bool FixpositionDriverNode::StartNode() {
         }
     }
 
+    // Publish a static identity transform from FP_ENU0 to map
+    geometry_msgs::msg::TransformStamped static_transform;
+    static_transform.header.stamp = tfs_.ecef_enu0_->header.stamp;
+    static_transform.header.frame_id = "FP_ENU0";
+    static_transform.child_frame_id = "map";
+    static_transform.transform.rotation.w = 1.0;
+    static_br_->sendTransform(static_transform);
+
     return driver_.StartDriver();
 }
 
@@ -662,77 +670,82 @@ void FixpositionDriverNode::ProcessOdometryData(const OdometryData& odometry_dat
 // ---------------------------------------------------------------------------------------------------------------------
 
 void FixpositionDriverNode::PublishNav2Tf() {
-    std::unique_lock<std::mutex> lock(tfs_.mutex_);
-    // We'll need all before we can start publishing the Nav2 TFs
-    if (!tfs_.ecef_enu0_ || !tfs_.poi_poish_ || !tfs_.ecef_poish_ || !tfs_.enu0_poi_) {
-        return;
-    }
+    return;
+// NOTE
+// We only need enu0->map, see `StartNode`
+// we especially dont want to odom -> vrtk_link -> base_link (https://docs.fixposition.com/fd/nav2-implementation)
 
-    // Publish a static identity transform from FP_ENU0 to map
-    geometry_msgs::msg::TransformStamped static_transform;
-    static_transform.header.stamp = tfs_.ecef_enu0_->header.stamp;
-    static_transform.header.frame_id = "FP_ENU0";
-    static_transform.child_frame_id = "map";
-    static_transform.transform.translation.x = 0.0;
-    static_transform.transform.translation.y = 0.0;
-    static_transform.transform.translation.z = 0.0;
-    static_transform.transform.rotation.w = 1.0;
-    static_transform.transform.rotation.x = 0.0;
-    static_transform.transform.rotation.y = 0.0;
-    static_transform.transform.rotation.z = 0.0;
-    if (IsNewStaticTransform(static_transform)) {
-        static_br_->sendTransform(static_transform);
-    }
+//     std::unique_lock<std::mutex> lock(tfs_.mutex_);
+//     // We'll need all before we can start publishing the Nav2 TFs
+//     if (!tfs_.ecef_enu0_ || !tfs_.poi_poish_ || !tfs_.ecef_poish_ || !tfs_.enu0_poi_) {
+//         return;
+//     }
 
-    // Compute FP_ENU0 -> FP_POISH
-    // Extract translation and rotation from ECEFENU0
-    geometry_msgs::msg::Vector3 trans_ecef_enu0 = tfs_.ecef_enu0_->transform.translation;
-    geometry_msgs::msg::Quaternion rot_ecef_enu0 = tfs_.ecef_enu0_->transform.rotation;
-    Eigen::Vector3d t_ecef_enu0_;
-    t_ecef_enu0_ << trans_ecef_enu0.x, trans_ecef_enu0.y, trans_ecef_enu0.z;
-    Eigen::Quaterniond q_ecef_enu0_(rot_ecef_enu0.w, rot_ecef_enu0.x, rot_ecef_enu0.y, rot_ecef_enu0.z);
+//     // Publish a static identity transform from FP_ENU0 to map
+//     geometry_msgs::msg::TransformStamped static_transform;
+//     static_transform.header.stamp = tfs_.ecef_enu0_->header.stamp;
+//     static_transform.header.frame_id = "FP_ENU0";
+//     static_transform.child_frame_id = "map";
+//     static_transform.transform.translation.x = 0.0;
+//     static_transform.transform.translation.y = 0.0;
+//     static_transform.transform.translation.z = 0.0;
+//     static_transform.transform.rotation.w = 1.0;
+//     static_transform.transform.rotation.x = 0.0;
+//     static_transform.transform.rotation.y = 0.0;
+//     static_transform.transform.rotation.z = 0.0;
+//     if (IsNewStaticTransform(static_transform)) {
+//         static_br_->sendTransform(static_transform);
+//     }
 
-    // Extract translation and rotation from ECEFPOISH
-    geometry_msgs::msg::Vector3 trans_ecef_poish = tfs_.ecef_poish_->transform.translation;
-    geometry_msgs::msg::Quaternion rot_ecef_poish = tfs_.ecef_poish_->transform.rotation;
-    Eigen::Vector3d t_ecef_poish;
-    t_ecef_poish << trans_ecef_poish.x, trans_ecef_poish.y, trans_ecef_poish.z;
-    Eigen::Quaterniond q_ecef_poish(rot_ecef_poish.w, rot_ecef_poish.x, rot_ecef_poish.y, rot_ecef_poish.z);
+//     // Compute FP_ENU0 -> FP_POISH
+//     // Extract translation and rotation from ECEFENU0
+//     geometry_msgs::msg::Vector3 trans_ecef_enu0 = tfs_.ecef_enu0_->transform.translation;
+//     geometry_msgs::msg::Quaternion rot_ecef_enu0 = tfs_.ecef_enu0_->transform.rotation;
+//     Eigen::Vector3d t_ecef_enu0_;
+//     t_ecef_enu0_ << trans_ecef_enu0.x, trans_ecef_enu0.y, trans_ecef_enu0.z;
+//     Eigen::Quaterniond q_ecef_enu0_(rot_ecef_enu0.w, rot_ecef_enu0.x, rot_ecef_enu0.y, rot_ecef_enu0.z);
 
-    // Compute the ENU transformation
-    const Eigen::Vector3d t_enu0_poish = trafo::TfEnuEcef(t_ecef_poish, trafo::TfWgs84LlhEcef(t_ecef_enu0_));
-    const Eigen::Quaterniond q_enu0_poish = q_ecef_enu0_.inverse() * q_ecef_poish;
+//     // Extract translation and rotation from ECEFPOISH
+//     geometry_msgs::msg::Vector3 trans_ecef_poish = tfs_.ecef_poish_->transform.translation;
+//     geometry_msgs::msg::Quaternion rot_ecef_poish = tfs_.ecef_poish_->transform.rotation;
+//     Eigen::Vector3d t_ecef_poish;
+//     t_ecef_poish << trans_ecef_poish.x, trans_ecef_poish.y, trans_ecef_poish.z;
+//     Eigen::Quaterniond q_ecef_poish(rot_ecef_poish.w, rot_ecef_poish.x, rot_ecef_poish.y, rot_ecef_poish.z);
 
-    // Create tf2::Transform tf_ENU0POISH
-    tf2::Transform tf_ENU0POISH;
-    tf_ENU0POISH.setOrigin(tf2::Vector3(t_enu0_poish.x(), t_enu0_poish.y(), t_enu0_poish.z()));
-    tf2::Quaternion tf_q_enu0_poish(q_enu0_poish.x(), q_enu0_poish.y(), q_enu0_poish.z(), q_enu0_poish.w());
-    tf_ENU0POISH.setRotation(tf_q_enu0_poish);
+//     // Compute the ENU transformation
+//     const Eigen::Vector3d t_enu0_poish = trafo::TfEnuEcef(t_ecef_poish, trafo::TfWgs84LlhEcef(t_ecef_enu0_));
+//     const Eigen::Quaterniond q_enu0_poish = q_ecef_enu0_.inverse() * q_ecef_poish;
 
-    // Publish map -> odom
-    // Multiply the transforms
-    tf2::Transform tf_ENU0POI;
-    tf2::fromMsg(tfs_.enu0_poi_->transform, tf_ENU0POI);
-    tf2::Transform tf_combined = tf_ENU0POI * tf_ENU0POISH.inverse();
+//     // Create tf2::Transform tf_ENU0POISH
+//     tf2::Transform tf_ENU0POISH;
+//     tf_ENU0POISH.setOrigin(tf2::Vector3(t_enu0_poish.x(), t_enu0_poish.y(), t_enu0_poish.z()));
+//     tf2::Quaternion tf_q_enu0_poish(q_enu0_poish.x(), q_enu0_poish.y(), q_enu0_poish.z(), q_enu0_poish.w());
+//     tf_ENU0POISH.setRotation(tf_q_enu0_poish);
 
-    // Create a new TransformStamped message
-    geometry_msgs::msg::TransformStamped tfs_odom;
-    tfs_odom.header.stamp = tfs_.enu0_poi_->header.stamp;
-    tfs_odom.header.frame_id = "map";
-    tfs_odom.child_frame_id = "odom";
-    tfs_odom.transform = tf2::toMsg(tf_combined);
-    tf_br_->sendTransform(tfs_odom);
+//     // Publish map -> odom
+//     // Multiply the transforms
+//     tf2::Transform tf_ENU0POI;
+//     tf2::fromMsg(tfs_.enu0_poi_->transform, tf_ENU0POI);
+//     tf2::Transform tf_combined = tf_ENU0POI * tf_ENU0POISH.inverse();
 
-// ELMAR CHANGED THIS    // Publish odom -> base_link 
-    geometry_msgs::msg::TransformStamped tf_odom_base;
-    tf_odom_base.header.stamp = tfs_.enu0_poi_->header.stamp;
-    tf_odom_base.header.frame_id = "odom";
-    tf_odom_base.child_frame_id = "base_link";
-    tf_odom_base.transform = tf2::toMsg(tf_ENU0POISH);
-    tf_br_->sendTransform(tf_odom_base);
+//     // Create a new TransformStamped message
+//     geometry_msgs::msg::TransformStamped tfs_odom;
+//     tfs_odom.header.stamp = tfs_.enu0_poi_->header.stamp;
+//     tfs_odom.header.frame_id = "map";
+//     tfs_odom.child_frame_id = "odom";
+//     tfs_odom.transform = tf2::toMsg(tf_combined);
+//     tf_br_->sendTransform(tfs_odom);
 
-    // Publish WGS84 datum
-    PublishDatum(trans_ecef_enu0, tfs_.enu0_poi_->header.stamp, datum_pub_);
+// // ELMAR CHANGED THIS    // Publish odom -> base_link 
+//     geometry_msgs::msg::TransformStamped tf_odom_base;
+//     tf_odom_base.header.stamp = tfs_.enu0_poi_->header.stamp;
+//     tf_odom_base.header.frame_id = "odom";
+//     tf_odom_base.child_frame_id = "vrtk_link";
+//     tf_odom_base.transform = tf2::toMsg(tf_ENU0POISH);
+//     tf_br_->sendTransform(tf_odom_base);
+
+//     // Publish WGS84 datum
+//     PublishDatum(trans_ecef_enu0, tfs_.enu0_poi_->header.stamp, datum_pub_);
 }
 
 bool FixpositionDriverNode::IsNewStaticTransform(const geometry_msgs::msg::TransformStamped& tf) {
