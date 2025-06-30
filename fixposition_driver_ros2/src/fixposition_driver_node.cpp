@@ -129,7 +129,7 @@ bool FixpositionDriverNode::StartNode() {
             // Update frames for Nav2
             if (params_.nav2_mode_) {
                 odometry_data.frame_id = "odom";
-                odometry_data.child_frame_id = "vrtk_link";
+                odometry_data.child_frame_id = "base_link";
             }
 
             PublishOdometryData(odometry_data, odometry_smooth_pub_);
@@ -161,10 +161,11 @@ bool FixpositionDriverNode::StartNode() {
             // Update frames for Nav2
             if (params_.nav2_mode_) {
                 odometry_data.frame_id = "map";
-                odometry_data.child_frame_id = "vrtk_link";
+                odometry_data.child_frame_id = "base_link";
             }
-
-            PublishOdometryData(odometry_data, odometry_enu_pub_);
+            if (odometry_data.valid && (odometry_data.pose.cov.array() < 0.01).all()) {
+              PublishOdometryData(odometry_data, odometry_enu_pub_);
+            }
             ProcessOdometryData(odometry_data);
             fusion_epoch_data_.CollectFpaOdomenu(odomenu_payload);
         });
@@ -470,7 +471,6 @@ bool FixpositionDriverNode::StartNode() {
     if (params_.nav2_mode_) {
         // Publish a static identity transform from FP_ENU0 to map
         geometry_msgs::msg::TransformStamped static_transform;
-        static_transform.header.stamp = tfs_.ecef_enu0_->header.stamp;
         static_transform.header.frame_id = "FP_ENU0";
         static_transform.child_frame_id = "map";
         static_transform.transform.rotation.w = 1.0;
@@ -742,7 +742,7 @@ void FixpositionDriverNode::PublishNav2Tf() {
 //     geometry_msgs::msg::TransformStamped tf_odom_base;
 //     tf_odom_base.header.stamp = tfs_.enu0_poi_->header.stamp;
 //     tf_odom_base.header.frame_id = "odom";
-//     tf_odom_base.child_frame_id = "vrtk_link";
+//     tf_odom_base.child_frame_id = "base_link";
 //     tf_odom_base.transform = tf2::toMsg(tf_ENU0POISH);
 //     tf_br_->sendTransform(tf_odom_base);
 
