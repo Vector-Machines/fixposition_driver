@@ -163,7 +163,7 @@ bool FixpositionDriverNode::StartNode() {
                 odometry_data.frame_id = "map";
                 odometry_data.child_frame_id = "base_link";
             }
-            if (odometry_data.valid && (odometry_data.pose.cov.array() < 0.01).all()) {
+            if (odometry_data.valid && (odometry_data.pose.cov.diagonal().array() < 0.005).all()) {
               PublishOdometryData(odometry_data, odometry_enu_pub_);
             }
             ProcessOdometryData(odometry_data);
