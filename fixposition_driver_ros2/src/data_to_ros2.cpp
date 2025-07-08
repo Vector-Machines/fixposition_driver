@@ -156,6 +156,9 @@ void PublishFpaOdometryDataImu(const fpa::FpaOdometryPayload& payload, bool nav2
 void PublishFpaOdometryDataNavSatFix(const fpa::FpaOdometryPayload& payload, bool nav2_mode_,
                                      rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr& pub) {
     if (pub->get_subscription_count() > 0) {
+        if (!payload.pos.valid) {
+            return;
+        }
         sensor_msgs::msg::NavSatFix msg;
         msg.header.stamp = ros2::utils::ConvTime(FpaGpsTimeToTime(payload.gps_time));
         if (nav2_mode_) {
@@ -636,6 +639,9 @@ void PublishNmeaGsv(const fpsdk::common::parser::nmea::NmeaGsvPayload& payload,
 void PublishNmeaHdt(const fpsdk::common::parser::nmea::NmeaHdtPayload& payload,
                     rclcpp::Publisher<fpmsgs::NmeaHdt>::SharedPtr& pub) {
     if (pub->get_subscription_count() > 0) {
+        if (!payload.heading.valid) {
+            return;
+        }
         fpmsgs::NmeaHdt msg;
         msg.talker = NmeaTalkerIdToMsg(msg, payload.talker);
         msg.heading = (payload.heading.valid ? payload.heading.value : NAN);
