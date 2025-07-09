@@ -186,7 +186,7 @@ void PublishFpaOdometryDataNavSatFix(const fpa::FpaOdometryPayload& payload, boo
             const Eigen::Matrix3d p_cov_e = pose.cov.topLeftCorner(3, 3);
             const Eigen::Matrix3d C_l_e = trafo::RotEnuEcef(pose.position);
             const Eigen::Matrix3d p_cov_l = C_l_e * p_cov_e * C_l_e.transpose();
-            cov_map = p_cov_l * 5.0;  // Increase covariance by 5 times
+            cov_map = p_cov_l;
             msg.position_covariance_type = msg.COVARIANCE_TYPE_KNOWN;
         }
 
