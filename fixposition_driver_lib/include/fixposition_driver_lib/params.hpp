@@ -41,6 +41,8 @@ struct DriverParams {
     bool raw_output_ = false;
     bool cov_warning_ = false;
     bool nav2_mode_ = false;
+    bool publish_map_to_odom_ = true;
+    bool publish_odom_to_base_link_ = true;
 
     enum class VelTopicType { UNSPECIFIED, TWIST, TWISTWITHCOV, ODOMETRY };
     bool converter_enabled_ = false;

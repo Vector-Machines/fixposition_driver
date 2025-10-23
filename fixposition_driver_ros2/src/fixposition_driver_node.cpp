@@ -710,26 +710,30 @@ void FixpositionDriverNode::PublishNav2Tf() {
     tf_ENU0POISH.setRotation(tf_q_enu0_poish);
 
     // Publish map -> odom
-    // Multiply the transforms
-    tf2::Transform tf_ENU0POI;
-    tf2::fromMsg(tfs_.enu0_poi_->transform, tf_ENU0POI);
-    tf2::Transform tf_combined = tf_ENU0POI * tf_ENU0POISH.inverse();
+    if (params_.publish_map_to_odom_) {
+        // Multiply the transforms
+        tf2::Transform tf_ENU0POI;
+        tf2::fromMsg(tfs_.enu0_poi_->transform, tf_ENU0POI);
+        tf2::Transform tf_combined = tf_ENU0POI * tf_ENU0POISH.inverse();
 
-    // Create a new TransformStamped message
-    geometry_msgs::msg::TransformStamped tfs_odom;
-    tfs_odom.header.stamp = tfs_.enu0_poi_->header.stamp;
-    tfs_odom.header.frame_id = "map";
-    tfs_odom.child_frame_id = "odom";
-    tfs_odom.transform = tf2::toMsg(tf_combined);
-    tf_br_->sendTransform(tfs_odom);
+        // Create a new TransformStamped message
+        geometry_msgs::msg::TransformStamped tfs_odom;
+        tfs_odom.header.stamp = tfs_.enu0_poi_->header.stamp;
+        tfs_odom.header.frame_id = "map";
+        tfs_odom.child_frame_id = "odom";
+        tfs_odom.transform = tf2::toMsg(tf_combined);
+        tf_br_->sendTransform(tfs_odom);
+    }
 
 // ELMAR CHANGED THIS    // Publish odom -> base_link 
-    geometry_msgs::msg::TransformStamped tf_odom_base;
-    tf_odom_base.header.stamp = tfs_.enu0_poi_->header.stamp;
-    tf_odom_base.header.frame_id = "odom";
-    tf_odom_base.child_frame_id = "base_link";
-    tf_odom_base.transform = tf2::toMsg(tf_ENU0POISH);
-    tf_br_->sendTransform(tf_odom_base);
+    if (params_.publish_odom_to_base_link_) {
+        geometry_msgs::msg::TransformStamped tf_odom_base;
+        tf_odom_base.header.stamp = tfs_.enu0_poi_->header.stamp;
+        tf_odom_base.header.frame_id = "odom";
+        tf_odom_base.child_frame_id = "base_link";
+        tf_odom_base.transform = tf2::toMsg(tf_ENU0POISH);
+        tf_br_->sendTransform(tf_odom_base);
+    }
 
     // Publish WGS84 datum
     PublishDatum(trans_ecef_enu0, tfs_.enu0_poi_->header.stamp, datum_pub_);

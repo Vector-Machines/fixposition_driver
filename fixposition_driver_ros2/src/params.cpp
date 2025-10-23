@@ -36,6 +36,8 @@ bool LoadParamsFromRos2(std::shared_ptr<rclcpp::Node>& nh, DriverParams& params)
     const std::string RAW_OUTPUT = "raw_output";
     const std::string COV_WARNING = "cov_warning";
     const std::string NAV2_MODE = "nav2_mode";
+    const std::string PUBLISH_MAP_TO_ODOM = "publish_map_to_odom";
+    const std::string PUBLISH_ODOM_TO_BASE_LINK = "publish_odom_to_base_link";
     const std::string CONVERTER_ENABLED = "converter.enabled";
     const std::string CONVERTER_INPUT_TOPIC = "converter.input_topic";
     const std::string CONVERTER_SCALE_FACTOR = "converter.scale_factor";
@@ -58,6 +60,8 @@ bool LoadParamsFromRos2(std::shared_ptr<rclcpp::Node>& nh, DriverParams& params)
     nh->declare_parameter(RAW_OUTPUT, params.raw_output_);
     nh->declare_parameter(COV_WARNING, params.cov_warning_);
     nh->declare_parameter(NAV2_MODE, params.nav2_mode_);
+    nh->declare_parameter(PUBLISH_MAP_TO_ODOM, params.publish_map_to_odom_);
+    nh->declare_parameter(PUBLISH_ODOM_TO_BASE_LINK, params.publish_odom_to_base_link_);
     nh->declare_parameter(CONVERTER_ENABLED, params.converter_enabled_);
     nh->declare_parameter(CONVERTER_INPUT_TOPIC, params.converter_input_topic_);
     nh->declare_parameter(CONVERTER_SCALE_FACTOR, params.converter_scale_factor_);
@@ -108,7 +112,15 @@ bool LoadParamsFromRos2(std::shared_ptr<rclcpp::Node>& nh, DriverParams& params)
         ok = false;
     }
     if (!nh->get_parameter(NAV2_MODE, params.nav2_mode_)) {
-        RCLCPP_WARN(logger, "Failed loading %s param", NAV2_MODE.c_str());
+        RCLCPP_ERROR(logger, "Failed to get parameter: %s", NAV2_MODE.c_str());
+        ok = false;
+    }
+    if (!nh->get_parameter(PUBLISH_MAP_TO_ODOM, params.publish_map_to_odom_)) {
+        RCLCPP_ERROR(logger, "Failed to get parameter: %s", PUBLISH_MAP_TO_ODOM.c_str());
+        ok = false;
+    }
+    if (!nh->get_parameter(PUBLISH_ODOM_TO_BASE_LINK, params.publish_odom_to_base_link_)) {
+        RCLCPP_ERROR(logger, "Failed to get parameter: %s", PUBLISH_ODOM_TO_BASE_LINK.c_str());
         ok = false;
     }
     if (!nh->get_parameter(CONVERTER_ENABLED, params.converter_enabled_)) {
@@ -178,6 +190,8 @@ bool LoadParamsFromRos2(std::shared_ptr<rclcpp::Node>& nh, DriverParams& params)
     RCLCPP_INFO(logger, "DriverParams: raw_output=%s", params.raw_output_ ? "true" : "false");
     RCLCPP_INFO(logger, "DriverParams: cov_warning=%s", params.cov_warning_ ? "true" : "false");
     RCLCPP_INFO(logger, "DriverParams: nav2_mode=%s", params.nav2_mode_ ? "true" : "false");
+    RCLCPP_INFO(logger, "DriverParams: publish_map_to_odom=%s", params.publish_map_to_odom_ ? "true" : "false");
+    RCLCPP_INFO(logger, "DriverParams: publish_odom_to_base_link=%s", params.publish_odom_to_base_link_ ? "true" : "false");
     RCLCPP_INFO(logger, "DriverParams: converter_enabled=%s", params.converter_enabled_ ? "true" : "false");
     RCLCPP_INFO(logger, "DriverParams: converter_topic_type=%s", topic_type_string_.c_str());
     RCLCPP_INFO(logger, "DriverParams: converter_input_topic=%s", params.converter_input_topic_.c_str());
