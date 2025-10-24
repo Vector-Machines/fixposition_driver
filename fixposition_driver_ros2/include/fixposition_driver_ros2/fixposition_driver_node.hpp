@@ -146,10 +146,13 @@ class FixpositionDriverNode {
     };
     Tfs tfs_;
     std::unique_ptr<TfData> ecef_enu0_tf_;
+    std::map<std::pair<std::string, std::string>, geometry_msgs::msg::TransformStamped> static_tfs_;
+    std::mutex static_tf_mutex_;
 
     void ProcessTfData(const TfData& tf_data);
     void ProcessOdometryData(const OdometryData& odometry_data);
     void PublishNav2Tf();
+    bool IsNewStaticTransform(const geometry_msgs::msg::TransformStamped& tf);
 };
 
 /* ****************************************************************************************************************** */
