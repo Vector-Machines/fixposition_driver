@@ -108,7 +108,7 @@ bool FixpositionDriverNode::StartNode() {
             PublishFpaOdometryDataImu(odometry_payload, params_.nav2_mode_, poiimu_pub_);
             PublishFpaOdometryDataNavSatFix(odometry_payload, params_.nav2_mode_, odometry_llh_pub_);
             OdometryData odometry_data;
-            odometry_data.SetFromFpaOdomPayload(odometry_payload);
+            if (!odometry_data.SetFromFpaOdomPayload(odometry_payload)) return;
             PublishOdometryData(odometry_data, odometry_ecef_pub_);
             ProcessOdometryData(odometry_data);
             fusion_epoch_data_.CollectFpaOdometry(odometry_payload);
@@ -124,7 +124,7 @@ bool FixpositionDriverNode::StartNode() {
             auto odomsh_payload = dynamic_cast<const fpa::FpaOdomshPayload&>(payload);
             PublishFpaOdomsh(odomsh_payload, fpa_odomsh_pub_);
             OdometryData odometry_data;
-            odometry_data.SetFromFpaOdomPayload(odomsh_payload);
+            if (!odometry_data.SetFromFpaOdomPayload(odomsh_payload)) return;
 
             // Update frames for Nav2
             if (params_.nav2_mode_) {
@@ -156,7 +156,7 @@ bool FixpositionDriverNode::StartNode() {
             PublishFpaOdomenu(odomenu_payload, fpa_odomenu_pub_);
             PublishFpaOdomenuVector3Stamped(odomenu_payload, eul_pub_);
             OdometryData odometry_data;
-            odometry_data.SetFromFpaOdomPayload(odomenu_payload);
+            if (!odometry_data.SetFromFpaOdomPayload(odomenu_payload)) return;
 
             // Update frames for Nav2
             if (params_.nav2_mode_) {
