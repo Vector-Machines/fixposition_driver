@@ -36,6 +36,7 @@ bool LoadParamsFromRos2(std::shared_ptr<rclcpp::Node>& nh, DriverParams& params)
     const std::string RAW_OUTPUT = "raw_output";
     const std::string COV_WARNING = "cov_warning";
     const std::string NAV2_MODE = "nav2_mode";
+    const std::string PUBLISH_ECEF_TO_ENU = "publish_ecef_to_enu";
     const std::string PUBLISH_ENU0_TO_MAP = "publish_enu0_to_map";
     const std::string PUBLISH_MAP_TO_ODOM = "publish_map_to_odom";
     const std::string PUBLISH_ODOM_TO_BASE_LINK = "publish_odom_to_base_link";
@@ -61,6 +62,7 @@ bool LoadParamsFromRos2(std::shared_ptr<rclcpp::Node>& nh, DriverParams& params)
     nh->declare_parameter(RAW_OUTPUT, params.raw_output_);
     nh->declare_parameter(COV_WARNING, params.cov_warning_);
     nh->declare_parameter(NAV2_MODE, params.nav2_mode_);
+    nh->declare_parameter(PUBLISH_ECEF_TO_ENU, params.publish_ecef_to_enu_);
     nh->declare_parameter(PUBLISH_ENU0_TO_MAP, params.publish_enu0_to_map_);
     nh->declare_parameter(PUBLISH_MAP_TO_ODOM, params.publish_map_to_odom_);
     nh->declare_parameter(PUBLISH_ODOM_TO_BASE_LINK, params.publish_odom_to_base_link_);
@@ -115,6 +117,10 @@ bool LoadParamsFromRos2(std::shared_ptr<rclcpp::Node>& nh, DriverParams& params)
     }
     if (!nh->get_parameter(NAV2_MODE, params.nav2_mode_)) {
         RCLCPP_ERROR(logger, "Failed to get parameter: %s", NAV2_MODE.c_str());
+        ok = false;
+    }
+    if (!nh->get_parameter(PUBLISH_ECEF_TO_ENU, params.publish_ecef_to_enu_)) {
+        RCLCPP_ERROR(logger, "Failed to get parameter: %s", PUBLISH_ECEF_TO_ENU.c_str());
         ok = false;
     }
     if (!nh->get_parameter(PUBLISH_ENU0_TO_MAP, params.publish_enu0_to_map_)) {
@@ -196,6 +202,7 @@ bool LoadParamsFromRos2(std::shared_ptr<rclcpp::Node>& nh, DriverParams& params)
     RCLCPP_INFO(logger, "DriverParams: raw_output=%s", params.raw_output_ ? "true" : "false");
     RCLCPP_INFO(logger, "DriverParams: cov_warning=%s", params.cov_warning_ ? "true" : "false");
     RCLCPP_INFO(logger, "DriverParams: nav2_mode=%s", params.nav2_mode_ ? "true" : "false");
+    RCLCPP_INFO(logger, "DriverParams: publish_ecef_to_enu=%s", params.publish_ecef_to_enu_ ? "true" : "false");
     RCLCPP_INFO(logger, "DriverParams: publish_enu0_to_map=%s", params.publish_enu0_to_map_ ? "true" : "false");
     RCLCPP_INFO(logger, "DriverParams: publish_map_to_odom=%s", params.publish_map_to_odom_ ? "true" : "false");
     RCLCPP_INFO(logger, "DriverParams: publish_odom_to_base_link=%s", params.publish_odom_to_base_link_ ? "true" : "false");

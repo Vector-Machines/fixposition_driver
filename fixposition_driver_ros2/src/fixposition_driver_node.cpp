@@ -586,7 +586,7 @@ void FixpositionDriverNode::ProcessTfData(const TfData& tf_data) {
     }
     // FP_ECEF -> FP_ENU0
     else if ((tf.child_frame_id == "FP_ENU0") && (tf.header.frame_id == "FP_ECEF")) {
-        if (IsNewStaticTransform(tf)) {
+        if (params_.publish_ecef_to_enu_ && IsNewStaticTransform(tf)) {
             static_br_->sendTransform(tf);
         }
         ecef_enu0_tf_ = std::make_unique<TfData>(tf_data);
